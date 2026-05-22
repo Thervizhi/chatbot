@@ -10,7 +10,7 @@ st.write(
 
 # Ask user for their API key (if your custom service requires one, otherwise this might be optional)
 openai_api_key = st.text_input("API Key (if required by custom service)", type="password")
-
+openai_api_url = st.text_input("API Url (if required by custom service)", type="text")
 if not openai_api_key:
     st.info("Please add your API key to continue.", icon="🗝️")
 else:
@@ -19,7 +19,7 @@ else:
     try:
         client = OpenAI(
             api_key=openai_api_key,
-            base_url=CUSTOM_API_BASE_URL  # <-- This is the key change for custom endpoints
+            base_url=openai_api_url # <-- This is the key change for custom endpoints
         )
     except Exception as e:
         st.error(f"Error initializing the client: {e}")

@@ -2,24 +2,28 @@ import streamlit as st
 from openai import OpenAI
 
 # Show title and description.
-st.title("💬 Chatbot")
+st.title("💬 Chatbot using Custom Endpoint")
 st.write(
-    "This is a simple chatbot that uses OpenAI's GPT-3.5 model to generate responses. "
-    "To use this app, you need to provide an OpenAI API key, which you can get [here](https://platform.openai.com/account/api-keys). "
-    "You can also learn how to build this app step by step by [following our tutorial](https://docs.streamlit.io/develop/tutorials/llms/build-conversational-apps)."
+    f"This is a simple chatbot that uses an external API to generate responses. "
+    f"It is configured to use the base URL: `{CUSTOM_API_BASE_URL}`."
 )
 
-# Ask user for their OpenAI API key via `st.text_input`.
-# Alternatively, you can store the API key in `./.streamlit/secrets.toml` and access it
-# via `st.secrets`, see https://docs.streamlit.io/develop/concepts/connections/secrets-management
-openai_api_key = st.text_input("OpenAI API Key", type="password")
+# Ask user for their API key (if your custom service requires one, otherwise this might be optional)
+openai_api_key = st.text_input("API Key (if required by custom service)", type="password")
+
 if not openai_api_key:
-    st.info("Please add your OpenAI API key to continue.", icon="🗝️")
+    st.info("Please add your API key to continue.", icon="🗝️")
 else:
 
-    # Create an OpenAI client.
-    client = OpenAI(api_key=openai_api_key)
-
+    # --- CHANGE HERE: Initialize the client with the base URL ---
+    try:
+        client = OpenAI(
+            api_key=openai_api_key,
+            base_url=CUSTOM_API_BASE_URL  # <-- This is the key change for custom endpoints
+        )
+    except Exception as e:
+        st.error(f"Error initializing the client: {e}")
+        client = None
     # Create a session state variable to store the chat messages. This ensures that the
     # messages persist across reruns.
     if "messages" not in st.session_state:
@@ -41,7 +45,7 @@ else:
 
         # Generate a response using the OpenAI API.
         stream = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="/root/.cache/huggingface/hub/models--TrevorJS--gemma-4-E2B-it-uncensored-GGUF/snapshots/4345c0c77cde7da43084c94b1deac23c09bccfc1/gemma-4-E2B-it-uncensored-Q4_K_M.gguf",
             messages=[
                 {"role": m["role"], "content": m["content"]}
                 for m in st.session_state.messages

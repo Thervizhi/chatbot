@@ -4,57 +4,59 @@ from openai import OpenAI
 # Show title and description.
 st.title("💬 Chatbot using Custom Endpoint")
 st.write(
-    f"This is a simple chatbot that uses an external API to generate responses. "
-    f"It is configured to use the base URL:"
+    "This is a simple chatbot that uses an external API to generate responses."
 )
 
-# Ask user for their API key (if your custom service requires one, otherwise this might be optional)
-openai_api_key = st.text_input("API Key (if required by custom service)", type="password")
-openai_api_url = st.text_input("API Url (if required by custom service)", type="default")
-if not openai_api_url:
-    st.info("Please add your API key to continue.", icon="🗝️")
-else:
+# Base URL is now the main requirement. API key is completely optional.
+openai_api_url = st.text_input("API Base URL (Required)", placeholder="http://localhost:8000/v1")
+openai_api_key = st.text_input("API Key (Optional)", type="password", placeholder="Leave blank if not required")
 
-    # --- CHANGE HERE: Initialize the client with the base URL ---
+if not openai_api_url:
+    st.info("Please add your custom API URL to continue.", icon="🌐")
+else:
+    # Initialize the client. If no key is provided, pass a dummy string to satisfy the library.
     try:
         client = OpenAI(
-            api_key=openai_api_key,
-            base_url=openai_api_url # <-- This is the key change for custom endpoints
+            api_key=openai_api_key if openai_api_key else "not-needed",
+            base_url=openai_api_url
         )
     except Exception as e:
         st.error(f"Error initializing the client: {e}")
         client = None
-    # Create a session state variable to store the chat messages. This ensures that the
-    # messages persist across reruns.
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
 
-    # Display the existing chat messages via `st.chat_message`.
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+    if client:
+        # Create a session state variable to store the chat messages.
+        if "messages" not in st.session_state:
+            st.session_state.messages = []
 
-    # Create a chat input field to allow the user to enter a message. This will display
-    # automatically at the bottom of the page.
-    if prompt := st.chat_input("What is up?"):
+        # Display the existing chat messages via `st.chat_message`.
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
 
-        # Store and display the current prompt.
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+        # Create a chat input field to allow the user to enter a message.
+        if prompt := st.chat_input("What is up?"):
 
-        # Generate a response using the OpenAI API.
-        stream = client.chat.completions.create(
-            model="/root/.cache/huggingface/hub/models--TrevorJS--gemma-4-E2B-it-uncensored-GGUF/snapshots/4345c0c77cde7da43084c94b1deac23c09bccfc1/gemma-4-E2B-it-uncensored-Q4_K_M.gguf",
-            messages=[
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages
-            ],
-            stream=True,
-        )
+            # Store and display the current prompt.
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
 
-        # Stream the response to the chat using `st.write_stream`, then store it in 
-        # session state.
-        with st.chat_message("assistant"):
-            response = st.write_stream(stream)
-        st.session_state.messages.append({"role": "assistant", "content": response})
+            try:
+                # Generate a response using the custom endpoint.
+                stream = client.chat.completions.create(
+                    model="/root/.cache/huggingface/hub/models--TrevorJS--gemma-4-E2B-it-uncensored-GGUF/snapshots/4345c0c77cde7da43084c94b1deac23c09bccfc1/gemma-4-E2B-it-uncensored-Q4_K_M.gguf",
+                    messages=[
+                        {"role": m["role"], "content": m["content"]}
+                        for m in st.session_state.messages
+                    ],
+                    stream=True,
+                )
+
+                # Stream the response to the chat using `st.write_stream`, then store it.
+                with st.chat_message("assistant"):
+                    response = st.write_stream(stream)
+                st.session_state.messages.append({"role": "assistant", "content": response})
+                
+            except Exception as e:
+                st.error(f"Failed to generate response. Check your local server terminal. Error: {e}")

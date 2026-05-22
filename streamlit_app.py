@@ -5,7 +5,7 @@ from openai import OpenAI
 st.title("💬 Chatbot using Custom Endpoint")
 st.write(
     f"This is a simple chatbot that uses an external API to generate responses. "
-    f"It is configured to use the base URL: `{CUSTOM_API_BASE_URL}`."
+    f"It is configured to use the base URL:"
 )
 
 # Ask user for their API key (if your custom service requires one, otherwise this might be optional)

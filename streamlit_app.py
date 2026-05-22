@@ -10,7 +10,7 @@ st.write(
 
 # Ask user for their API key (if your custom service requires one, otherwise this might be optional)
 openai_api_key = st.text_input("API Key (if required by custom service)", type="password")
-openai_api_url = st.text_input("API Url (if required by custom service)", type="text")
+openai_api_url = st.text_input("API Url (if required by custom service)", type="default")
 if not openai_api_key:
     st.info("Please add your API key to continue.", icon="🗝️")
 else:
